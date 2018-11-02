@@ -9,6 +9,10 @@ import json
 import codecs
 import tkinter
 import sys
+import smtplib
+from email.mime.text import MIMEText
+from email.parser import Parser
+from email.message import EmailMessage
 
 
 today = datetime.date.today()
@@ -27,8 +31,7 @@ url = "https://stream.twitter.com/1.1/statuses/filter.json"
 
 followersIdGet = 'https://api.twitter.com/1.1/followers/ids.json?screen_name='
 
-def getUserId():
-    scName = "KCNAWatch"
+def getUserId(scName):
     countN = '&count=1'
     urlIdGet = 'https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=' + scName + countN
     userIdRes = requests.get(urlIdGet, auth=AUTH)
@@ -36,7 +39,37 @@ def getUserId():
     for searchRes in userIdJson:
         print(searchRes['user']['id'])
 
-#getUserId()
+#getUserId('KCNAWatch')
+
+def emailTo(tweetSrc):
+
+    gmailUserName = '*********@gmail.com'
+    gmailPassword = 'your_password'
+    targetEmail = 'target_mail@******.com'
+
+    smtpServer = smtplib.SMTP('smtp.gmail.com', 587) #
+    #smtpServer.connect('smtp.gmail.com', 587) #Connect to smtp.gmail.com on port 465, if you’re using SSL. (Connect on port 587 if you’re using TLS.)
+    smtpServer.ehlo()
+    smtpServer.starttls()
+   #smtpServer.ehlo()
+
+    mailHeaders = Parser().parsestr('From: <@gmail.com>\n'
+                                'To: <@outlook.com>\n'
+                                'Subject: Test message\n'
+                                '\n'
+                                'Body would go here\n')
+
+    message = EmailMessage()
+    message.set_content(tweetSrc)
+    message['subject'] = 'Test send'
+    message['From'] = gmailUserName
+    message['To'] = targetEmail
+
+    smtpServer.login(gmailUserName, gmailPassword)
+    #smtpServer.sendmail(gmailUserName, targetEmail, tweetSrc)
+    smtpServer.send_message(message)
+    smtpServer.quit()
+
 
 trumpID = 25073877
 civilAirID = 1064031036
@@ -67,6 +100,7 @@ for lineFeed in resp.iter_lines():
                tweetText = lineFeed['text']
                print(tweetAt)
                print(userScName + '   '+ tweetText + '\n')
+               emailTo(tweetText)
                #print(userID)
            break
 
@@ -76,5 +110,3 @@ for lineFeed in resp.iter_lines():
         except TypeError:
             print('Type Error')
             break
-
-
