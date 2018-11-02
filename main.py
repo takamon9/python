@@ -1,17 +1,18 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import datetime
 import urllib3
 import requests
 from requests_oauthlib import OAuth1
 import json
+import codecs
 import tkinter
+import sys
 
-a = 2
-b = 3
-
-c = a + b
 
 today = datetime.date.today()
-print(c)
+
 print(today.year, "year", today.month, "month", today.day, "day")
 
 api_key = ""
@@ -19,40 +20,61 @@ api_secret = ""
 access_token = ""
 access_secret = ""
 
-auth = OAuth1(api_key, api_secret, access_token, access_secret)
+AUTH = OAuth1(api_key, api_secret, access_token, access_secret)
 
 url = "https://stream.twitter.com/1.1/statuses/filter.json"
 
-urlIdGetter = "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=KCNAWatch&count=1"
-#urlRes = requests.get(urlIdGetter, auth=auth)
-#urlRes = json.loads(urlRes.text)
-#print(urlRes)
 
-trumpID = 1057728445386539008
-civilAirID = 1057797213097725952
-rt_comId = 1057870349725982721
-kcnaId = 1057871517990744064
+followersIdGet = 'https://api.twitter.com/1.1/followers/ids.json?screen_name='
 
-r = requests.post(url, auth=auth, stream=True, data={'follow': rt_comId})
+def getUserId():
+    scName = "KCNAWatch"
+    countN = '&count=1'
+    urlIdGet = 'https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=' + scName + countN
+    userIdRes = requests.get(urlIdGet, auth=AUTH)
+    userIdJson = json.loads(userIdRes.text)
+    for searchRes in userIdJson:
+        print(searchRes['user']['id'])
 
-for lineFeed in r.iter_lines():
+#getUserId()
+
+trumpID = 25073877
+civilAirID = 1064031036
+rt_comId = 64643056
+kcnaId = 612926882
+
+searchTypy = u'follow'
+searchWord = ''
+followUserID = [rt_comId, trumpID, civilAirID, kcnaId]
+
+resp = requests.post(url, auth=AUTH,  stream=True, data={searchTypy: followUserID})
+
+for lineFeed in resp.iter_lines():
 
     while True:
         try:
             lineFeed = json.loads(lineFeed)
         except ValueError:
-            print('Value Error')
+            #print('Value Error')
             break
 
         try:
-            answer = lineFeed['text']
-            if answer:
-                print(answer)
-                break
+           userID = lineFeed['user']['id']
+           tweetAt = lineFeed['created_at']
+
+           if userID in followUserID:
+               userScName = lineFeed['user']['screen_name']
+               tweetText = lineFeed['text']
+               print(tweetAt)
+               print(userScName + '   '+ tweetText + '\n')
+               #print(userID)
+           break
+
         except KeyError:
             print('Key Error')
             break
         except TypeError:
             print('Type Error')
             break
+
 
